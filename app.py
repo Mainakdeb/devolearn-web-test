@@ -27,5 +27,5 @@ ort_session = ort.InferenceSession('membrane_segmentor.onnx')
 iface = gr.Interface(predict_from_onnx, 
                      gr.inputs.Image(image_mode="L", tool='edit'), 
                      gr.outputs.Image(),
-                     title="GUI Demo - ONNX backend")
+                     title="DevoLearn - C. elegans Cell Membrane Segmentation")
 iface.launch(debug=False)
