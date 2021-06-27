@@ -51,10 +51,12 @@ examples = [["examples/input_1.png"],
             ]
 
 
-gr.Interface(predict_from_onnx, 
+iface = gr.Interface(predict_from_onnx, 
             gr.inputs.Image(image_mode="L"),
             [gr.outputs.Image(label="Segmentation Map"), gr.outputs.Image(label="Centroid Map")],
             title="DevoLearn - C. elegans Cell Membrane Segmentation",
             layout="horizontal",
             examples = examples,
-            allow_flagging=False).launch()
+            allow_flagging=False)
+
+iface.launch(debug=False)
