@@ -46,7 +46,8 @@ ort_session = ort.InferenceSession('membrane_segmentor.onnx')
 
 iface = gr.Interface(predict_from_onnx, 
             gr.inputs.Image(image_mode="L"),
-            [gr.outputs.Image(label="Segmentation Map"), gr.outputs.Image(label="Centroid Map")],
+            gr.outputs.Image(label="Segmentation Map"), 
+            #gr.outputs.Image(label="Centroid Map")],
             title="DevoLearn - C. elegans Cell Membrane Segmentation",
             server_name="0.0.0.0")
 
