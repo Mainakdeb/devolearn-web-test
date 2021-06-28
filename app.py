@@ -45,9 +45,9 @@ def expand_dims_twice(arr):
 
 ort_session = ort.InferenceSession('membrane_segmentor.onnx')
 
-examples = [["examples/input_1.png"],
-            ["examples/input_2.png"],
-            ["examples/input_3.png"],
+examples = [["input_1.png"],
+            ["input_2.png"],
+            ["input_3.png"],
             ]
 
 
