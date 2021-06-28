@@ -44,18 +44,11 @@ def expand_dims_twice(arr):
 
 ort_session = ort.InferenceSession('membrane_segmentor.onnx')
 
-examples = [["examples/input_1.png"],
-            ["examples/input_2.png"],
-            ["examples/input_3.png"],
-            ]
-
-
 iface = gr.Interface(predict_from_onnx, 
             gr.inputs.Image(image_mode="L"),
             [gr.outputs.Image(label="Segmentation Map"), gr.outputs.Image(label="Centroid Map")],
             title="DevoLearn - C. elegans Cell Membrane Segmentation",
             layout="horizontal",
-            examples = examples,
             allow_flagging=False)
 
 iface.launch(debug=False)
