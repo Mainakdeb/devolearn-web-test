@@ -31,7 +31,7 @@ def generate_centroid_image(thresh):
             cY = int(M["m01"] / M["m00"])
             # draw the contour and center of the shape on the image
             # cv2.drawContours(centroid_image, [c], -1, (255, 255, 255), 2)
-            cv2.circle(centroid_image, (cX, cY), 2, (1, 1, 1), -1)
+            cv2.circle(centroid_image, (cX, cY), 2, (0.5, 0.5, 0.5), -1)
             centroids.append((cX, cY))
         except:
             pass
