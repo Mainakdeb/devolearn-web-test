@@ -12,7 +12,6 @@ def predict_from_onnx(input_image):
     img_unsqueeze = expand_dims_twice(resized)
     onnx_outputs = ort_session.run(None, {'input': img_unsqueeze.astype('float32')})
     resized_ret = Image.fromarray(onnx_outputs[0][0][0]).resize((356, 256), Image.NEAREST)
-
     centroid_img = generate_centroid_image(np.array(onnx_outputs[0][0][0]))
     resized_centroid_img = Image.fromarray(centroid_img).resize((356, 256), Image.NEAREST)
     return(resized_ret, resized_centroid_img)
@@ -45,9 +44,9 @@ def expand_dims_twice(arr):
 
 ort_session = ort.InferenceSession('membrane_segmentor.onnx')
 
-examples = [["input_1.png"],
-            ["input_2.png"],
-            ["input_3.png"],
+examples = [["examples/input_1.png"],
+            ["examples/input_2.png"],
+            ["examples/input_3.png"],
             ]
 
 
@@ -60,3 +59,4 @@ iface = gr.Interface(predict_from_onnx,
             allow_flagging=False)
 
 iface.launch(debug=False)
+
