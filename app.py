@@ -1,19 +1,25 @@
-import gradio as gr
+import streamlit as st
+import numpy as np
+import pandas as pd
+from PIL import Image
+from pathlib import Path
+
 import numpy as np
 import cv2
 import onnxruntime as ort
-from PIL import Image
 import imutils
+import matplotlib.pyplot as plt
 
 def predict_from_onnx(input_image):
     ort_session = ort.InferenceSession('membrane_segmentor.onnx')
-    img = Image.fromarray(input_image)
+    img = Image.fromarray(np.uint8(input_image))
     resized = img.resize((256, 256), Image.NEAREST)
     img_unsqueeze = expand_dims_twice(resized)
-    onnx_outputs = ort_session.run(None, {'input': img_unsqueeze.astype('float32')})
-    resized_ret = Image.fromarray(onnx_outputs[0][0][0]).resize((356, 256), Image.NEAREST)
-    centroid_img = generate_centroid_image(np.array(onnx_outputs[0][0][0]))
-    resized_centroid_img = Image.fromarray(centroid_img).resize((356, 256), Image.NEAREST)
+    onnx_outputs = ort_session.run(None, {'input': img_unsqueeze.astype('float32')}) 
+    scaled_outputs = onnx_outputs[0][0][0]* 255
+    resized_ret = Image.fromarray(scaled_outputs.astype(np.uint8) ).resize((356, 256), Image.NEAREST)#.convert("L")
+    centroid_img = generate_centroid_image(np.array(onnx_outputs[0][0][0])) *255
+    resized_centroid_img = Image.fromarray(centroid_img.astype(np.uint8)).resize((356, 256), Image.NEAREST)
     return(resized_ret, resized_centroid_img)
 
 def generate_centroid_image(thresh):
@@ -42,19 +48,79 @@ def expand_dims_twice(arr):
     ret = np.expand_dims(np.expand_dims(norm, axis=0), axis=0)
     return(ret)
 
-ort_session = ort.InferenceSession('membrane_segmentor.onnx')
-
-examples = [["examples/input_1.png"],
-            ["examples/input_2.png"]]
+def read_markdown_file(markdown_file):
+    return Path(markdown_file).read_text()
 
 
-iface = gr.Interface(predict_from_onnx, 
-            gr.inputs.Image(image_mode="L"),
-            [gr.outputs.Image(label="Segmentation Map"), gr.outputs.Image(label="Centroid Map")],
-            title="DevoLearn - C. elegans Cell Membrane Segmentation",
-            layout="horizontal",
-            examples = examples,
-            allow_flagging=False)
+def home():
+    st.title('Home')
+    #st.subheader('Markdown, images, charts, instructions, plotly plots')
+    image = Image.open('images/banner_1.jpg')
+    show = st.image(image, use_column_width=True)
+    #st.text("https://github.com/Mainakdeb/devolearn/edit/master/README.md")
+    intro_markdown = read_markdown_file("./home.md")
+    st.markdown(intro_markdown, unsafe_allow_html=True)
 
-iface.launch(debug=False)
+def cell_membrane_segmentation():
+    selected_box2 = st.sidebar.selectbox(
+    'Choose Example Input',
+    ('Example_1.png','Example_2.png')
+    )
 
+    st.title('DevoLearn')
+    instructions = """
+        Segment Cell Membrane from C. elegans embryo imaging data \n
+        Either upload your own image or select from the sidebar to get a preconfigured image. 
+        The image you select or upload will be fed through the Deep Neural Network in real-time 
+        and the output will be displayed to the screen.
+        """
+    st.text(instructions)
+
+    file = st.file_uploader('Upload An Image')
+    #st.text("Here is the example input image")
+    example_image = Image.open('./images/cell_membrane_segmentation_examples/'+selected_box2)
+
+    col1, col2, col3 = st.beta_columns(3)
+
+    if file:
+        input = Image.open(file)
+        # print(file)
+        # print("BUGS..........", type(file))
+        col1.image(file, caption="input image")
+    else:
+        input = example_image
+        
+        col1.image(example_image, caption="input image")
+
+    pressed = st.button('Run')
+    if pressed:
+        st.empty()
+        col2.image(predict_from_onnx(np.array(input))[0], caption="segmentation map")
+        col3.image(predict_from_onnx(np.array(input))[1], caption="centroid map")
+
+
+st.set_page_config(page_title="DevoLearn", page_icon='🔬', layout='centered', initial_sidebar_state='auto')
+
+hide_streamlit_style = """
+            <style>
+            header {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True) 
+
+selected_box = st.sidebar.selectbox(
+    'Choose one of the following',
+    ('Home','Cell Membrane Segmentation','Nucleus Segmentation', 'Predict Lineage populations', 'Generate Embryo Images')
+    )
+
+if selected_box == 'Home':
+    home()
+if selected_box == 'Cell Membrane Segmentation':
+   cell_membrane_segmentation() 
+# if selected_box == 'Nucleus Segmentation':
+#     cell_nucleus_segmentation() 
+# if selected_box == 'Predict Lineage populations':
+#     predict_lineage_populations()
+# if selected_box == 'Generate Embryo Images':
+#     generate_embryo_images()
