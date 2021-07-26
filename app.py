@@ -10,7 +10,7 @@ import onnxruntime as ort
 import imutils
 import matplotlib.pyplot as plt
 
-def predict_from_onnx(input_image):
+def onnx_segment_membrane(input_image):
     ort_session = ort.InferenceSession('membrane_segmentor.onnx')
     img = Image.fromarray(np.uint8(input_image))
     resized = img.resize((256, 256), Image.NEAREST)
@@ -48,6 +48,16 @@ def expand_dims_twice(arr):
     ret = np.expand_dims(np.expand_dims(norm, axis=0), axis=0)
     return(ret)
 
+def onnx_segment_nucleus(input_image):
+    ort_session = ort.InferenceSession('nucleus_segmentor.onnx')
+    img = Image.fromarray(np.uint8(input_image))
+    resized = img.resize((256, 256), Image.NEAREST)
+    img_unsqueeze = expand_dims_twice(resized)
+    onnx_outputs = ort_session.run(None, {'input': img_unsqueeze.astype('float32')}) 
+    scaled_outputs = onnx_outputs[0][0][0]* 255
+    resized_ret = Image.fromarray(scaled_outputs.astype(np.uint8) ).resize((708, 512), Image.NEAREST)#.convert("L")
+    return(resized_ret)
+
 def read_markdown_file(markdown_file):
     return Path(markdown_file).read_text()
 
@@ -75,17 +85,13 @@ def cell_membrane_segmentation():
         and the output will be displayed to the screen.
         """
     st.text(instructions)
-
-    file = st.file_uploader('Upload An Image')
-    #st.text("Here is the example input image")
+    file = st.file_uploader('Upload an image or choose an example')
     example_image = Image.open('./images/cell_membrane_segmentation_examples/'+selected_box2)
 
     col1, col2, col3 = st.beta_columns(3)
 
     if file:
         input = Image.open(file)
-        # print(file)
-        # print("BUGS..........", type(file))
         col1.image(file, caption="input image")
     else:
         input = example_image
@@ -95,8 +101,40 @@ def cell_membrane_segmentation():
     pressed = st.button('Run')
     if pressed:
         st.empty()
-        col2.image(predict_from_onnx(np.array(input))[0], caption="segmentation map")
-        col3.image(predict_from_onnx(np.array(input))[1], caption="centroid map")
+        col2.image(onnx_segment_membrane(np.array(input))[0], caption="segmentation map")
+        col3.image(onnx_segment_membrane(np.array(input))[1], caption="centroid map")
+
+def nucleus_segmentation():
+    selected_box2 = st.sidebar.selectbox(
+    'Choose Example Input',
+    ('Example_1.png','Example_2.png')
+    )
+
+    st.title('Nucleus Segmentation')
+    instructions = """
+        Segment Nucleii from fluorescence microscopy imagery data (C. elegans embryo) \n
+        Either upload your own image or select from the sidebar to get a preconfigured image. 
+        The image you select or upload will be fed through the Deep Neural Network in real-time 
+        and the output will be displayed to the screen.
+        """
+    st.text(instructions)
+    file = st.file_uploader('Upload an image or choose an example')
+    example_image = Image.open('./images/nucleus_segmentation_examples/'+selected_box2)
+
+    col1, col2= st.beta_columns(2)
+
+    if file:
+        input = Image.open(file)
+        col1.image(file, caption="input image")
+    else:
+        input = example_image
+        
+        col1.image(example_image, caption="input image")
+
+    pressed = st.button('Run')
+    if pressed:
+        st.empty()
+        col2.image(onnx_segment_nucleus(np.array(input)), caption="segmentation map")
 
 
 st.set_page_config(page_title="DevoLearn", page_icon='🔬', layout='centered', initial_sidebar_state='auto')
@@ -118,8 +156,8 @@ if selected_box == 'Home':
     home()
 if selected_box == 'Cell Membrane Segmentation':
    cell_membrane_segmentation() 
-# if selected_box == 'Nucleus Segmentation':
-#     cell_nucleus_segmentation() 
+if selected_box == 'Nucleus Segmentation':
+    nucleus_segmentation() 
 # if selected_box == 'Predict Lineage populations':
 #     predict_lineage_populations()
 # if selected_box == 'Generate Embryo Images':
