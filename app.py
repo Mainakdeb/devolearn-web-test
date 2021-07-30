@@ -9,7 +9,7 @@ import numpy as np
 import cv2
 import onnxruntime as ort
 import imutils
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import pandas as pd
 
 def onnx_segment_membrane(input_image):
@@ -179,7 +179,7 @@ def lineage_population_model():
     col1, col2= st.beta_columns(2)
 
     if file:
-        input = Image.open(file)
+        input = Image.open(file).convert("RGB")
         col1.image(file, caption="input image")
     else:
         input = example_image
