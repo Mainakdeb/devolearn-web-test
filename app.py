@@ -11,14 +11,18 @@ import onnxruntime as ort
 import imutils
 # import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.express as px
 
-def onnx_segment_membrane(input_image):
+
+def onnx_segment_membrane(input_image, threshold):
     ort_session = ort.InferenceSession('membrane_segmentor.onnx')
     img = Image.fromarray(np.uint8(input_image))
     resized = img.resize((256, 256), Image.NEAREST)
     img_unsqueeze = expand_dims_twice(resized)
     onnx_outputs = ort_session.run(None, {'input': img_unsqueeze.astype('float32')}) 
-    scaled_outputs = onnx_outputs[0][0][0]* 255
+    binarized = 1.0 * (onnx_outputs[0][0][0] > threshold)
+
+    scaled_outputs = binarized
     resized_ret = Image.fromarray(scaled_outputs.astype(np.uint8) ).resize((356, 256), Image.NEAREST)#.convert("L")
     centroid_img = generate_centroid_image(np.array(onnx_outputs[0][0][0])) *255
     resized_centroid_img = Image.fromarray(centroid_img.astype(np.uint8)).resize((356, 256), Image.NEAREST)
@@ -110,22 +114,35 @@ def cell_membrane_segmentation():
     st.text(instructions)
     file = st.file_uploader('Upload an image or choose an example')
     example_image = Image.open('./images/cell_membrane_segmentation_examples/'+selected_box2)
-
+    threshold = st.sidebar.slider("Select Threshold (Applied on model output)", 0.0, 1.0, 0.1)
     col1, col2, col3 = st.beta_columns(3)
 
     if file:
         input = Image.open(file)
-        col1.image(file, caption="input image")
+        fig1 = px.imshow(input, binary_string=True, labels=dict(x="Input Image"))
+        fig1.update(layout_coloraxis_showscale=False)
+        fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+        col1.plotly_chart(fig1, use_container_width=True)
+
     else:
         input = example_image
-        
-        col1.image(example_image, caption="input image")
+        fig1 = px.imshow(input, binary_string=True, labels=dict(x="Input Image"))
+        fig1.update(layout_coloraxis_showscale=False)
+        fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+        col1.plotly_chart(fig1, use_container_width=True)
 
     pressed = st.button('Run')
     if pressed:
         st.empty()
-        col2.image(onnx_segment_membrane(np.array(input))[0], caption="segmentation map")
-        col3.image(onnx_segment_membrane(np.array(input))[1], caption="centroid map")
+        model_output = onnx_segment_membrane(np.array(input), threshold)
+
+        fig2 = px.imshow(model_output[0], binary_string=True, labels=dict(x="Segmentation Map"))
+        fig2.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+        col2.plotly_chart(fig2, use_container_width=True)
+
+        fig3 = px.imshow(model_output[1], binary_string=True, labels=dict(x="Centroid Map"))
+        fig3.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+        col3.plotly_chart(fig3, use_container_width=True)
 
 def nucleus_segmentation():
     selected_box2 = st.sidebar.selectbox(
@@ -198,7 +215,8 @@ def lineage_population_model():
         df = pd.DataFrame({"Lineage":["A", "E", "M", "P", "C", "D", "Z"] , "Population": scaled_output[0]})
         col2.table(df)
 
-st.set_page_config(page_title="DevoLearn", page_icon='🔬', layout='centered', initial_sidebar_state='auto')
+st.set_page_config(page_title="DevoLearn", page_icon='🔬', layout='wide', initial_sidebar_state='auto')
+
 
 hide_streamlit_style = """
             <style>
