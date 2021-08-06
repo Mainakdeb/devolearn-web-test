@@ -22,8 +22,7 @@ def onnx_segment_membrane(input_image, threshold):
     onnx_outputs = ort_session.run(None, {'input': img_unsqueeze.astype('float32')}) 
     binarized = 1.0 * (onnx_outputs[0][0][0] > threshold)
 
-    scaled_outputs = binarized
-    resized_ret = Image.fromarray(scaled_outputs.astype(np.uint8) ).resize((356, 256), Image.NEAREST)#.convert("L")
+    resized_ret = Image.fromarray(binarized.astype(np.uint8) ).resize((356, 256), Image.NEAREST)#.convert("L")
     centroid_img = generate_centroid_image(np.array(onnx_outputs[0][0][0])) *255
     resized_centroid_img = Image.fromarray(centroid_img.astype(np.uint8)).resize((356, 256), Image.NEAREST)
     return(resized_ret, resized_centroid_img)
@@ -49,14 +48,14 @@ def generate_centroid_image(thresh):
             pass
     return(centroid_image)
 
-def onnx_segment_nucleus(input_image):
+def onnx_segment_nucleus(input_image, threshold):
     ort_session = ort.InferenceSession('nucleus_segmentor.onnx')
     img = Image.fromarray(np.uint8(input_image))
     resized = img.resize((256, 256), Image.NEAREST)
     img_unsqueeze = expand_dims_twice(resized)
     onnx_outputs = ort_session.run(None, {'input': img_unsqueeze.astype('float32')}) 
-    scaled_outputs = onnx_outputs[0][0][0]* 255
-    resized_ret = Image.fromarray(scaled_outputs.astype(np.uint8) ).resize((708, 512), Image.NEAREST)#.convert("L")
+    binarized = 1.0 * (onnx_outputs[0][0][0] > threshold)
+    resized_ret = Image.fromarray(binarized.astype(np.uint8) ).resize((708, 512), Image.NEAREST)#.convert("L")
     return(resized_ret)
 
 def onnx_predict_lineage_population(input_image):
@@ -160,21 +159,28 @@ def nucleus_segmentation():
     st.text(instructions)
     file = st.file_uploader('Upload an image or choose an example')
     example_image = Image.open('./images/nucleus_segmentation_examples/'+selected_box2)
-
+    threshold = st.sidebar.slider("Select Threshold (Applied on model output)", 0.0, 1.0, 0.1)
     col1, col2= st.beta_columns(2)
 
     if file:
         input = Image.open(file)
-        col1.image(file, caption="input image")
+        fig1 = px.imshow(input, binary_string=True, labels=dict(x="Input Image"))
+        fig1.update(layout_coloraxis_showscale=False)
+        fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+        col1.plotly_chart(fig1, use_container_width=True)
     else:
         input = example_image
-        
-        col1.image(example_image, caption="input image")
+        fig1 = px.imshow(input, binary_string=True, labels=dict(x="Input Image"))
+        fig1.update(layout_coloraxis_showscale=False)
+        fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+        col1.plotly_chart(fig1, use_container_width=True)
 
     pressed = st.button('Run')
     if pressed:
         st.empty()
-        col2.image(onnx_segment_nucleus(np.array(input)), caption="segmentation map")
+        fig2 = px.imshow(onnx_segment_nucleus(np.array(input), threshold), binary_string=True, labels=dict(x="Segmentation Map"))
+        fig2.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+        col2.plotly_chart(fig2, use_container_width=True)
 
 def lineage_population_model():
     selected_box2 = st.sidebar.selectbox(
@@ -197,11 +203,16 @@ def lineage_population_model():
 
     if file:
         input = Image.open(file).convert("RGB")
-        col1.image(file, caption="input image")
+        fig1 = px.imshow(input, binary_string=True, labels=dict(x="Input Image"))
+        fig1.update(layout_coloraxis_showscale=False)
+        fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+        col1.plotly_chart(fig1, use_container_width=True)
     else:
         input = example_image
-        
-        col1.image(example_image, caption="input image")
+        fig1 = px.imshow(input, binary_string=True, labels=dict(x="Input Image"))
+        fig1.update(layout_coloraxis_showscale=False)
+        fig1.update_layout(margin=dict(l=0, r=0, b=0, t=0))
+        col1.plotly_chart(fig1, use_container_width=True)
 
     pressed = st.button('Run')
     if pressed:
