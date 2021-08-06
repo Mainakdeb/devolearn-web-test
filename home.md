@@ -10,7 +10,10 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/DevoLearn/data-science-demos/blob/master/devolearn_docs/devolearn_quickstart.ipynb)
 [![](https://img.shields.io/twitter/url?color=green&label=Slack&logo=slack&logoColor=blue&style=social&url=https%3A%2F%2Fopenworm.slack.com%2Farchives%2FCMVFU7Q4W)](https://openworm.slack.com/archives/CMVFU7Q4W)
 
+Feel free to select and try out models from the drop-down menu to the left. Don't forget check out DevoLearn on:
 
+1. [Github](https://github.com/DevoLearn/devolearn)
+2. [PyPI package](https://pypi.org/project/devolearn/)
 
 <!-- ## Contents
 
@@ -39,6 +42,7 @@ pip install devolearn
 </p> -->
 
 
+## DevoLearn can be used for:
 
 1. Segmenting the Cell Membrane in C. elegans embryo
 <p align="center">
@@ -77,7 +81,7 @@ plt.show()
 df = segmentor.predict_from_video(video_path = "sample_data/videos/seg_sample.mov", centroid_mode = True, save_folder = "preds")
 df.to_csv("centroids.csv")
 ``` -->
-2. Segmenting the Cell Nucleus in C. elegans embryo 
+2. Segmenting Nucleii in C. elegans embryo 
 <p align="center">
 <img src = "https://raw.githubusercontent.com/Mainakdeb/devolearn/master/images/nucleus_segmentation.gif" width = "60%">
 </p>
@@ -153,5 +157,6 @@ plot.show()
 * [Mayukh Deb](https://twitter.com/mayukh091)
 * [Ujjwal Singh](https://twitter.com/ujjjwalll)
 * [Dr. Bradly Alicea](https://twitter.com/balicea1)
+* [Mainak Deb](https://twitter.com/MainakDeb19)
 
 Feel free to join our [Slack workspace](https://openworm.slack.com/archives/CMVFU7Q4W)!
